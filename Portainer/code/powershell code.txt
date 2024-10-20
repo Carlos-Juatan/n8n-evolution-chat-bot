@@ -1,0 +1,3 @@
+docker stack deploy -c portainer-agent-stack.yml portainer
+
+docker stack deploy -c portainer-agent-stack.yml --resolve-image changed portainer

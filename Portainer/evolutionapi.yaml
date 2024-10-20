@@ -1,0 +1,75 @@
+version: "3.7"
+
+services:
+  evolution_api:
+    image: atendai/evolution-api:latest
+    #ports:
+    #  - 8282:8080
+    command: ["node", "./dist/src/main.js"]
+    networks:
+      - traefik_public
+      - app_network
+    volumes:
+      - eapi_instances:/evolution/instances
+      - eapi_store:/evolution/store
+    environment:
+      SERVER_URL: https://api.SEU_DOMINIO.com.br
+      CONFIG_SESSION_PHONE_CLIENT: RobonildoBot
+      AUTHENTICATION_TYPE: apikey
+      AUTHENTICATION_API_KEY: 0939b347635dadc9596aa4027a229109
+      # Permanent data storage MongoDB
+      #DATABASE_ENABLED: false
+      #DATABASE_CONNECTION_URI: mongodb://USER:PASSWORD@HOSTNAME:27017/?authSource=admin&readPreference=primary&ssl=false&directConnection=true
+      #DATABASE_CONNECTION_DB_PREFIX_NAME: evdocker
+      # Choose the data you want to save in the application's database or store
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "false"
+      DATABASE_SAVE_DATA_CONTACTS: "false"
+      DATABASE_SAVE_DATA_CHATS: "false"
+      #logs definição
+      LOG_LEVEL: ERROR,WARN
+      # config adicional
+      DEL_INSTANCE: "false"
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 100M
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - traefik.enable=true
+
+        # Endereço inseguro com o http
+        - traefik.http.routers.evolution_sem_seguro.rule=Host(`evolutionapi.localhost`)
+        - traefik.http.routers.evolution_sem_seguro.entrypoints=web
+
+        # Redirecionamento do http para o https
+        - traefik.http.middlewares.evolution_api_redirect_https.redirectscheme.scheme=https
+        - traefik.http.routers.evolution_sem_seguro.middlewares=evolution_api_redirect_https
+
+        # Endereço seguro com o https
+        - traefik.http.routers.evolution_api.rule=Host(`evolutionapi.localhost`)
+        - traefik.http.routers.evolution_api.entrypoints=websecure
+        - traefik.http.routers.evolution_api.tls.certresolver=le
+        - traefik.http.routers.evolution_api.service=evolution_api
+        - traefik.http.services.evolution_api.loadbalancer.server.port=8080
+
+
+networks:
+  traefik_public:
+    external: true
+  app_network:
+    external: true
+
+
+volumes:
+  eapi_instances:
+    external: true
+  eapi_store:
+    external: true

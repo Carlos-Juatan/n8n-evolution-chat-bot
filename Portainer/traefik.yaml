@@ -1,0 +1,61 @@
+version: '3.8'
+
+# mais info: https://youtu.be/o7tBbYy-5I4
+services:
+  reverse-proxy:
+    image: traefik:v2.11
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.swarmMode=true
+      #defina a mesma rede que você criou para o traefik
+      - --providers.docker.network=traefik_public
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      # Config para SSL Lets Encrypt
+      # altere para seu e-mail
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.email=carlosjuatan.workplace@gmail.com
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+      # Global HTTP -> HTTPS
+      #- --entrypoints.web.http.redirections.entryPoint.to=websecure
+      #- --entrypoints.web.http.redirections.entryPoint.scheme=https
+      #- --api
+      #- --log.level=DEBUG
+    ports:
+      - "80:80"
+      #- "8080:8080" # porta do painel do traefik, caso queira ver todas as rotas.
+      - "443:443"
+    volumes:
+      - traefik_certificates:/letsencrypt
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    deploy:
+      mode: replicated
+      replicas: 1
+    #  resources:
+    #    limits:
+    #      cpus: '0.25'
+    #      memory: 300M
+    #      memory: 30M
+    #  placement:
+    #  constraints: [node.hostname == manager]
+    
+    networks:
+      - traefik_public
+
+  whoami:
+    # A container that exposes an API to show its IP address
+    image: traefik/whoami
+    labels:
+      - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
+
+volumes:
+  traefik_certificates:
+    external: true
+
+networks:
+  traefik_public:
+    external: true

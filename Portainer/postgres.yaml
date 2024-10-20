@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16.4
+    command: [postgres, --max_connections=100]
+    environment:
+      - POSTGRES_PASSWORD:5705d8a6f4b97250bab8b556b63acb61
+    networks:
+      - app_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          #- node.role == worker
+          #- node.hostname == database
+          #- node.labels == robonildo
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+
+volumes:
+  postgres_data:
+    external: true
+
+networks:
+  app_network:
+    external: true

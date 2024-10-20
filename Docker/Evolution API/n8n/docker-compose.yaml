@@ -1,0 +1,14 @@
+version: '3.9'
+
+#..
+services:
+  #..
+
+#..
+volumes:
+
+#..
+networks:
+  evolution-net:
+    name: evolution-net
+    driver: bridge

@@ -1,0 +1,41 @@
+version: '3.7'
+
+#..
+services:
+  #..
+  redis:
+    image: redis:latest
+    networks:
+      - evolution-net
+    container_name: redis
+    command: >
+      redis-server --port 6379 --appendonly yes
+    volumes:
+      - evolution_redis:/data
+    ports:
+      - 6379:6379
+    environment:
+      # Habilitar o cache Redis
+      -  CACHE_REDIS_ENABLED=true
+
+        # URI de conexão com o Redis
+      -  CACHE_REDIS_URI=redis://localhost:6379/6
+
+        # Prefixo para diferenciar os dados de diferentes instalações que utilizam o mesmo Redis
+      -  CACHE_REDIS_PREFIX_KEY=evolution
+
+        # Habilitar para salvar as informações de conexão no Redis ao invés do banco de dados
+      -  CACHE_REDIS_SAVE_INSTANCES=false
+
+        # Habilitar o cache local
+      -  CACHE_LOCAL_ENABLED=false 
+
+#..
+volumes:
+  evolution_redis:
+
+#..
+networks:
+  evolution-net:
+    name: evolution-net
+    driver: bridge

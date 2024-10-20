@@ -1,0 +1,29 @@
+version: '3.9'
+
+#..
+services:
+  #..
+  evolution-api:
+    container_name: evolution_api
+    image: atendai/evolution-api
+    restart: always
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - evolution_store:/evolution/store
+      - evolution_instances:/evolution/instances
+    networks:
+      - evolution-net
+
+#..
+volumes:
+  evolution_store:
+  evolution_instances:
+
+#..
+networks:
+  evolution-net:
+    name: evolution-net
+    driver: bridge

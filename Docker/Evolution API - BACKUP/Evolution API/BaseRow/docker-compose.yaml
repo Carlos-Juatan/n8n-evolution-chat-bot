@@ -1,0 +1,48 @@
+version: '3.7'
+
+#..
+services:
+  #..
+  baserow:
+    image: baserow/baserow:latest
+    networks:
+      - evolution-net
+    volumes:
+      - baserow_data:/baserow/data
+    environment:
+      BASEROW_PUBLIC_URL: https://localhost:90
+      DATABASE_HOST: postgres
+      DATABASE_NAME: baserow
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: PASSWORD
+      BASEROW_TRIGGER_SYNC_TEMPLATES_AFTER_MIGRATION: "false"
+      BASEROW_ROW_PAGE_SIZE_LIMIT: 200
+      BATCH_ROWS_SIZE_LIMIT: 200
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1024M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.baserow.rule=Host(`localhost:90`)
+        - traefik.http.routers.baserow.entrypoints=websecure
+        - traefik.http.routers.baserow.tls.certresolver=le
+        - traefik.http.routers.baserow.service=baserow
+        - traefik.http.services.baserow.loadbalancer.server.port=90
+
+
+#..
+volumes:
+  baserow_data:
+
+#..
+networks:
+  evolution-net:
+    name: evolution-net
+    driver: bridge

@@ -1,0 +1,56 @@
+version: "3.7"
+
+services:
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=carlosjuatan.workplace@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=car_J#09  
+      - PGADMIN_LISTEN_PORT=5454
+      #- SCRIPT_NAME=/pgadmin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 2048M
+      labels:
+        - traefik.enable
+ 
+        # Endereço inseguro com o http
+        - traefik.http.routers.pgadmin_sem_seguro.rule=Host(`pgadmin.localhost`) && PathPrefix(`/pgadmin`)
+        - traefik.http.routers.pgadmin_sem_seguro.entrypoints=web
+
+        # Redirecionamento do http para o https
+        - traefik.http.middlewares.pgadmin_redirect_https.redirectscheme.scheme=https
+        - traefik.http.routers.pgadmin_sem_seguro.middlewares=pgadmin_redirect_https
+
+        # Endereço seguro com o https
+        - traefik.http.routers.pgadmin.rule=Host(`pgadmin.localhost`) && PathPrefix(`/pgadmin`)
+        - traefik.http.routers.pgadmin.entrypoints=websecure
+        - traefik.http.routers.pgadmin.tls.certresolver=le
+        - traefik.http.routers.pgadmin.service=pgadmin
+        - traefik.http.routers.pgadmin.tls=true
+        - traefik.http.services.pgadmin.loadbalancer.server.port=5454/tcp
+    networks:
+        - traefik_public
+        - app_network
+    # comente ou remova a porta caso use o traefik
+    #ports:
+    #  - 4000:80
+
+volumes:
+  pgadmin_data:
+    external: true
+
+networks:
+  traefik_public:
+    external: true
+  app_network:
+    external: true

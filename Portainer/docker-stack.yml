@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  portainer:
+    image: portainer/portainer-ce:2.21.3
+    command: -H tcp://tasks.agent:9001 --tlsskipverify
+    ports:
+      - 9443:9443
+      - 9000:9000
+      - 8000:8000
+    volumes:
+      - portainer_data:/data
+    networks:
+      - agent_network
+      #- traefik_public
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [ node.role == manager ]
+      #labels:
+      #  - traefik.enable=true
+      #  - traefik.http.routers.portainer.rule=Host(`portainer.robonildo.com`)
+      #  - traefik.http.services.portainer.loadbalancer.server.port=9000
+      #  - traefik.http.routers.portainer.service=portainer
+      #  - traefik.http.routers.portainer.tls.certresolver=le
+      #  - traefik.http.routers.portainer.entrypoints=websecure
+      #  - traefik.http.routers.portainer.tls=true
+
+networks:
+  #traefik_public:
+  #  driver: overlay
+  #  external: true
+  #  attachable: true
+  agent_network:
+    driver: overlay
+    external: true
+
+volumes:
+  portainer_data:
